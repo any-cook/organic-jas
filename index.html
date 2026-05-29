@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有機JAS管理システム | Any-Cook</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green-deep: #1a3d2b;
+  --green-mid: #2d6a4f;
+  --green-light: #52b788;
+  --green-pale: #b7e4c7;
+  --cream: #f8f5ef;
+  --cream-dark: #ede8de;
+  --brown: #8b6f47;
+  --text-dark: #1a1a1a;
+  --text-mid: #4a4a4a;
+  --text-light: #888;
+  --white: #ffffff;
+  --warn: #e07b39;
+  --danger: #c0392b;
+  --shadow: 0 2px 16px rgba(26,61,43,0.10);
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--cream);
+  color: var(--text-dark);
+  min-height: 100vh;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: var(--green-deep);
+  color: var(--white);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-title .logo {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--green-pale);
+  opacity: 0.8;
+}
+.header-title h1 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.header-badge {
+  background: var(--green-mid);
+  color: var(--green-pale);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 1px;
+}
+
+/* ===== SETUP MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,61,43,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 40px;
+  max-width: 520px;
+  width: 90%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+}
+.modal h2 { color: var(--green-deep); margin-bottom: 8px; font-size: 20px; }
+.modal p { color: var(--text-mid); font-size: 13px; margin-bottom: 24px; line-height: 1.6; }
+.setup-field { margin-bottom: 14px; }
+.setup-field label { display: block; font-size: 12px; font-weight: 700; color: var(--green-mid); margin-bottom: 4px; letter-spacing: 0.5px; }
+.setup-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--cream-dark);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Space Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.setup-field input:focus { border-color: var(--green-light); }
+.btn-primary {
+  background: var(--green-mid);
+  color: var(--white);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+  transition: background 0.2s;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.btn-primary:hover { background: var(--green-deep); }
+
+/* ===== NAV TABS ===== */
+.nav-tabs {
+  background: var(--white);
+  border-bottom: 2px solid var(--cream-dark);
+  display: flex;
+  padding: 0 16px;
+  overflow-x: auto;
+  gap: 4px;
+  position: sticky;
+  top: 60px;
+  z-index: 90;
+}
+.nav-tab {
+  padding: 14px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-light);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-tab:hover { color: var(--green-mid); }
+.nav-tab.active {
+  color: var(--green-deep);
+  border-bottom-color: var(--green-light);
+  font-weight: 700;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main { padding: 24px 20px; max-width: 1200px; margin: 0 auto; }
+.section { display: none; }
+.section.active { display: block; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--green-deep);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green-mid);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cream-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== FORM ===== */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 12px; font-weight: 700; color: var(--text-mid); letter-spacing: 0.3px; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 9px 12px;
+  border: 1.5px solid var(--cream-dark);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  background: var(--white);
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--green-light); }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+.btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.btn-green { background: var(--green-mid); color: var(--white); }
+.btn-green:hover { background: var(--green-deep); }
+.btn-outline { background: transparent; border: 1.5px solid var(--green-mid); color: var(--green-mid); }
+.btn-outline:hover { background: var(--green-pale); }
+.btn-danger { background: var(--danger); color: var(--white); }
+.btn-danger:hover { background: #a93226; }
+.btn-warn { background: var(--warn); color: var(--white); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* ===== TABLE ===== */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: var(--green-deep);
+  color: var(--white);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cream-dark);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--cream); }
+
+/* ===== BADGES ===== */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-green { background: var(--green-pale); color: var(--green-deep); }
+.badge-warn { background: #fde8d8; color: var(--warn); }
+.badge-danger { background: #fde8e8; color: var(--danger); }
+.badge-gray { background: var(--cream-dark); color: var(--text-mid); }
+
+/* ===== DASHBOARD ===== */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--green-light);
+}
+.stat-card.warn { border-left-color: var(--warn); }
+.stat-card.danger { border-left-color: var(--danger); }
+.stat-num { font-size: 28px; font-weight: 700; color: var(--green-deep); font-family: 'Space Mono', monospace; }
+.stat-card.warn .stat-num { color: var(--warn); }
+.stat-card.danger .stat-num { color: var(--danger); }
+.stat-label { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+/* ===== TRACE ===== */
+.trace-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.trace-step {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+.trace-step::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 38px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--green-pale);
+}
+.trace-step:last-child::before { display: none; }
+.trace-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--green-mid);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+.trace-content {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  flex: 1;
+  box-shadow: var(--shadow);
+}
+.trace-content h4 { font-size: 14px; font-weight: 700; color: var(--green-deep); margin-bottom: 6px; }
+.trace-content p { font-size: 12px; color: var(--text-mid); line-height: 1.6; }
+
+/* ===== PDF ===== */
+.pdf-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--green-mid);
+  font-size: 12px;
+  text-decoration: none;
+  font-weight: 700;
+}
+.pdf-link:hover { color: var(--green-deep); text-decoration: underline; }
+
+/* ===== ALERTS ===== */
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  border-left: 4px solid;
+}
+.alert-warn { background: #fef3e8; border-color: var(--warn); color: #7a4520; }
+.alert-green { background: #e8f5ee; border-color: var(--green-light); color: var(--green-deep); }
+
+/* ===== EXPIRY ===== */
+.expiry-ok { color: var(--green-mid); font-weight: 700; }
+.expiry-warn { color: var(--warn); font-weight: 700; }
+.expiry-danger { color: var(--danger); font-weight: 700; }
+
+/* ===== LOADING ===== */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+/* ===== EMPTY ===== */
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .main { padding: 16px 12px; }
+  .card { padding: 16px; }
+  .modal { padding: 24px; }
+  th, td { padding: 8px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP MODAL -->
+<div class="modal-overlay active" id="setupModal">
+  <div class="modal">
+    <h2>🌿 初期設定</h2>
+    <p>Firebase の設定値を入力してください。設定後はブラウザに保存されます。</p>
+    <div class="setup-field">
+      <label>API KEY</label>
+      <input type="text" id="cfg_apiKey" placeholder="AIzaSy...">
+    </div>
+    <div class="setup-field">
+      <label>AUTH DOMAIN</label>
+      <input type="text" id="cfg_authDomain" placeholder="xxx.firebaseapp.com">
+    </div>
+    <div class="setup-field">
+      <label>PROJECT ID</label>
+      <input type="text" id="cfg_projectId" placeholder="organic-jas">
+    </div>
+    <div class="setup-field">
+      <label>STORAGE BUCKET</label>
+      <input type="text" id="cfg_storageBucket" placeholder="xxx.appspot.com">
+    </div>
+    <div class="setup-field">
+      <label>MESSAGING SENDER ID</label>
+      <input type="text" id="cfg_messagingSenderId" placeholder="123456789">
+    </div>
+    <div class="setup-field">
+      <label>APP ID</label>
+      <input type="text" id="cfg_appId" placeholder="1:xxx:web:xxx">
+    </div>
+    <button class="btn-primary" onclick="saveConfig()">💾 保存して開始</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-title">
+    <span class="logo">ANY-COOK</span>
+    <h1>🌿 有機JAS管理システム</h1>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="header-badge" id="connStatus">接続中...</span>
+    <button class="btn btn-outline btn-sm" style="color:#b7e4c7;border-color:#b7e4c7;" onclick="openSetup()">設定</button>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav-tabs">
+  <div class="nav-tab active" onclick="showTab('dashboard')">📊 ダッシュボード</div>
+  <div class="nav-tab" onclick="showTab('certs')">🏅 認証書管理</div>
+  <div class="nav-tab" onclick="showTab('materials')">🌾 原材料マスタ</div>
+  <div class="nav-tab" onclick="showTab('arrivals')">📦 入荷管理</div>
+  <div class="nav-tab" onclick="showTab('productions')">🏭 製造管理</div>
+  <div class="nav-tab" onclick="showTab('shipments')">🚚 出荷管理</div>
+  <div class="nav-tab" onclick="showTab('trace')">🔍 トレース</div>
+</nav>
+
+<main class="main">
+
+<!-- ===== DASHBOARD ===== -->
+<div class="section active" id="sec-dashboard">
+  <div class="section-header">
+    <div class="section-title">📊 ダッシュボード</div>
+    <button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 更新</button>
+  </div>
+  <div class="stats-grid" id="dashStats">
+    <div class="stat-card"><div class="stat-num" id="ds-certs">-</div><div class="stat-label">有効認証書</div></div>
+    <div class="stat-card warn"><div class="stat-num" id="ds-expiry">-</div><div class="stat-label">期限3ヶ月以内</div></div>
+    <div class="stat-card"><div class="stat-num" id="ds-arrivals">-</div><div class="stat-label">今月入荷ロット</div></div>
+    <div class="stat-card"><div class="stat-num" id="ds-prods">-</div><div class="stat-label">今月製造記録</div></div>
+    <div class="stat-card"><div class="stat-num" id="ds-ships">-</div><div class="stat-label">今月出荷件数</div></div>
+  </div>
+
+  <div id="dashAlerts"></div>
+
+  <div class="card">
+    <div class="card-title">📋 最近の製造記録</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>製造日</th><th>製品名</th><th>ロット番号</th><th>数量</th><th>担当者</th></tr></thead>
+        <tbody id="recentProds"><tr><td colspan="5" class="empty">読み込み中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CERTS ===== -->
+<div class="section" id="sec-certs">
+  <div class="section-header">
+    <div class="section-title">🏅 認証書管理</div>
+    <button class="btn btn-green" onclick="toggleForm('certForm')">＋ 新規登録</button>
+  </div>
+
+  <div class="card" id="certForm" style="display:none;">
+    <div class="card-title">📝 認証書登録</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>仕入先名 *</label>
+        <input type="text" id="c_supplier" placeholder="〇〇農園">
+      </div>
+      <div class="form-group">
+        <label>認証機関</label>
+        <input type="text" id="c_agency" placeholder="日本オーガニック＆ナチュラルフーズ協会">
+      </div>
+      <div class="form-group">
+        <label>認証番号</label>
+        <input type="text" id="c_certNo" placeholder="JAS-2024-XXXX">
+      </div>
+      <div class="form-group">
+        <label>対象品目 *</label>
+        <input type="text" id="c_item" placeholder="有機大豆">
+      </div>
+      <div class="form-group">
+        <label>認証日</label>
+        <input type="date" id="c_certDate">
+      </div>
+      <div class="form-group">
+        <label>有効期限 *</label>
+        <input type="date" id="c_expiry">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>認証書PDF *</label>
+      <input type="file" id="c_pdf" accept=".pdf" style="padding:6px;">
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>備考</label>
+      <textarea id="c_note" placeholder="メモ"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="toggleForm('certForm')">キャンセル</button>
+      <button class="btn btn-green" onclick="saveCert()">💾 保存</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏅 認証書一覧</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>仕入先</th><th>品目</th><th>認証番号</th><th>認証機関</th><th>有効期限</th><th>状態</th><th>PDF</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="certList"><tr><td colspan="8" class="empty">読み込み中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MATERIALS ===== -->
+<div class="section" id="sec-materials">
+  <div class="section-header">
+    <div class="section-title">🌾 原材料マスタ</div>
+    <button class="btn btn-green" onclick="toggleForm('matForm')">＋ 新規登録</button>
+  </div>
+
+  <div class="card" id="matForm" style="display:none;">
+    <div class="card-title">📝 原材料登録</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>原材料名 *</label>
+        <input type="text" id="m_name" placeholder="有機大豆">
+      </div>
+      <div class="form-group">
+        <label>区分</label>
+        <select id="m_type">
+          <option value="有機">有機</option>
+          <option value="慣行">慣行</option>
+          <option value="転換中">転換中</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>仕入先</label>
+        <input type="text" id="m_supplier" placeholder="〇〇農園">
+      </div>
+      <div class="form-group">
+        <label>単位</label>
+        <input type="text" id="m_unit" placeholder="kg">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>備考</label>
+      <textarea id="m_note" placeholder="保管条件など"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="toggleForm('matForm')">キャンセル</button>
+      <button class="btn btn-green" onclick="saveMaterial()">💾 保存</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌾 原材料一覧</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>原材料名</th><th>区分</th><th>仕入先</th><th>単位</th><th>備考</th><th>操作</th></tr>
+        </thead>
+        <tbody id="matList"><tr><td colspan="6" class="empty">読み込み中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ARRIVALS ===== -->
+<div class="section" id="sec-arrivals">
+  <div class="section-header">
+    <div class="section-title">📦 入荷管理</div>
+    <button class="btn btn-green" onclick="toggleForm('arrForm')">＋ 入荷記録</button>
+  </div>
+
+  <div class="card" id="arrForm" style="display:none;">
+    <div class="card-title">📝 入荷記録</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>入荷日 *</label>
+        <input type="date" id="a_date">
+      </div>
+      <div class="form-group">
+        <label>原材料 *</label>
+        <select id="a_material"><option value="">選択してください</option></select>
+      </div>
+      <div class="form-group">
+        <label>ロット番号 *</label>
+        <input type="text" id="a_lot" placeholder="LOT-20240601-001">
+      </div>
+      <div class="form-group">
+        <label>数量 *</label>
+        <input type="number" id="a_qty" placeholder="100">
+      </div>
+      <div class="form-group">
+        <label>単位</label>
+        <input type="text" id="a_unit" placeholder="kg">
+      </div>
+      <div class="form-group">
+        <label>紐付け認証書</label>
+        <select id="a_cert"><option value="">選択（任意）</option></select>
+      </div>
+      <div class="form-group">
+        <label>仕入先</label>
+        <input type="text" id="a_supplier" placeholder="〇〇農園">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>備考</label>
+      <textarea id="a_note"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="toggleForm('arrForm')">キャンセル</button>
+      <button class="btn btn-green" onclick="saveArrival()">💾 保存</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📦 入荷ロット一覧</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>入荷日</th><th>ロット番号</th><th>原材料</th><th>数量</th><th>仕入先</th><th>認証書</th><th>操作</th></tr>
+        </thead>
+        <tbody id="arrList"><tr><td colspan="7" class="empty">読み込み中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PRODUCTIONS ===== -->
+<div class="section" id="sec-productions">
+  <div class="section-header">
+    <div class="section-title">🏭 製造管理</div>
+    <button class="btn btn-green" onclick="toggleForm('prodForm')">＋ 製造記録</button>
+  </div>
+
+  <div class="card" id="prodForm" style="display:none;">
+    <div class="card-title">📝 製造記録</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>製造日 *</label>
+        <input type="date" id="p_date">
+      </div>
+      <div class="form-group">
+        <label>製品名 *</label>
+        <input type="text" id="p_product" placeholder="有機みそ">
+      </div>
+      <div class="form-group">
+        <label>製造ロット番号 *</label>
+        <input type="text" id="p_lot" placeholder="PROD-20240601-001">
+      </div>
+      <div class="form-group">
+        <label>製造数量 *</label>
+        <input type="number" id="p_qty" placeholder="500">
+      </div>
+      <div class="form-group">
+        <label>単位</label>
+        <input type="text" id="p_unit" placeholder="個">
+      </div>
+      <div class="form-group">
+        <label>担当者</label>
+        <input type="text" id="p_staff" placeholder="担当者名">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>使用原料ロット（入荷ロット番号をカンマ区切りで）</label>
+      <input type="text" id="p_usedLots" placeholder="LOT-20240601-001, LOT-20240601-002">
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>製造メモ</label>
+      <textarea id="p_note"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="toggleForm('prodForm')">キャンセル</button>
+      <button class="btn btn-green" onclick="saveProduction()">💾 保存</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏭 製造記録一覧</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>製造日</th><th>製品名</th><th>製造ロット</th><th>数量</th><th>担当者</th><th>使用原料ロット</th><th>操作</th></tr>
+        </thead>
+        <tbody id="prodList"><tr><td colspan="7" class="empty">読み込み中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHIPMENTS ===== -->
+<div class="section" id="sec-shipments">
+  <div class="section-header">
+    <div class="section-title">🚚 出荷管理</div>
+    <button class="btn btn-green" onclick="toggleForm('shipForm')">＋ 出荷記録</button>
+  </div>
+
+  <div class="card" id="shipForm" style="display:none;">
+    <div class="card-title">📝 出荷記録</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>出荷日 *</label>
+        <input type="date" id="s_date">
+      </div>
+      <div class="form-group">
+        <label>出荷先 *</label>
+        <input type="text" id="s_dest" placeholder="〇〇スーパー">
+      </div>
+      <div class="form-group">
+        <label>製品名 *</label>
+        <input type="text" id="s_product" placeholder="有機みそ">
+      </div>
+      <div class="form-group">
+        <label>製造ロット番号 *</label>
+        <input type="text" id="s_prodLot" placeholder="PROD-20240601-001">
+      </div>
+      <div class="form-group">
+        <label>出荷数量 *</label>
+        <input type="number" id="s_qty" placeholder="100">
+      </div>
+      <div class="form-group">
+        <label>単位</label>
+        <input type="text" id="s_unit" placeholder="個">
+      </div>
+      <div class="form-group">
+        <label>配送業者</label>
+        <select id="s_carrier">
+          <option value="">選択</option>
+          <option value="佐川急便">佐川急便</option>
+          <option value="ヤマト運輸">ヤマト運輸</option>
+          <option value="日本郵便">日本郵便</option>
+          <option value="自社配送">自社配送</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>伝票番号</label>
+        <input type="text" id="s_trackNo" placeholder="1234-5678-9012">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>備考</label>
+      <textarea id="s_note"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="toggleForm('shipForm')">キャンセル</button>
+      <button class="btn btn-green" onclick="saveShipment()">💾 保存</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚚 出荷記録一覧</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>出荷日</th><th>出荷先</th><th>製品名</th><th>製造ロット</th><th>数量</th><th>配送業者</th><th>操作</th></tr>
+        </thead>
+        <tbody id="shipList"><tr><td colspan="7" class="empty">読み込み中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TRACE ===== -->
+<div class="section" id="sec-trace">
+  <div class="section-header">
+    <div class="section-title">🔍 トレーサビリティ</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔍 ロット追跡</div>
+    <p style="font-size:13px;color:var(--text-mid);margin-bottom:14px;">入荷ロット番号または製造ロット番号を入力すると、原料→製造→出荷の流れを追跡できます。</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <input type="text" id="traceQuery" placeholder="ロット番号を入力..." style="flex:1;padding:10px 14px;border:1.5px solid var(--cream-dark);border-radius:8px;font-size:14px;min-width:200px;font-family:'Noto Sans JP',sans-serif;">
+      <button class="btn btn-green" onclick="runTrace()">🔍 追跡</button>
+    </div>
+  </div>
+
+  <div id="traceResult" style="display:none;">
+    <div class="trace-flow" id="traceFlow"></div>
+  </div>
+</div>
+
+</main>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+let db = null;
+let storage = null;
+
+// ===== CONFIG =====
+function getConfig() {
+  return {
+    apiKey: localStorage.getItem('jas_apiKey') || '',
+    authDomain: localStorage.getItem('jas_authDomain') || '',
+    projectId: localStorage.getItem('jas_projectId') || '',
+    storageBucket: localStorage.getItem('jas_storageBucket') || '',
+    messagingSenderId: localStorage.getItem('jas_messagingSenderId') || '',
+    appId: localStorage.getItem('jas_appId') || ''
+  };
+}
+
+window.saveConfig = function() {
+  const fields = ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'];
+  fields.forEach(f => {
+    const v = document.getElementById('cfg_'+f).value.trim();
+    if(v) localStorage.setItem('jas_'+f, v);
+  });
+  document.getElementById('setupModal').classList.remove('active');
+  initFirebase();
+};
+
+window.openSetup = function() {
+  const cfg = getConfig();
+  ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'].forEach(f => {
+    document.getElementById('cfg_'+f).value = cfg[f] || '';
+  });
+  document.getElementById('setupModal').classList.add('active');
+};
+
+function initFirebase() {
+  const cfg = getConfig();
+  if(!cfg.apiKey || !cfg.projectId) {
+    document.getElementById('connStatus').textContent = '未設定';
+    return;
+  }
+  try {
+    let app;
+    try { app = initializeApp(cfg, 'jas-app'); } catch(e) {
+      // already initialized
+      const { getApp } = window.__fbModules || {};
+      if(getApp) app = getApp('jas-app');
+    }
+    db = getFirestore(app);
+    storage = getStorage(app);
+    document.getElementById('connStatus').textContent = '接続済み ✓';
+    document.getElementById('connStatus').style.background = 'var(--green-mid)';
+    loadAll();
+  } catch(e) {
+    document.getElementById('connStatus').textContent = 'エラー';
+    console.error(e);
+  }
+}
+
+// ===== NAV =====
+window.showTab = function(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+  const idx = ['dashboard','certs','materials','arrivals','productions','shipments','trace'];
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs[idx.indexOf(tab)]?.classList.add('active');
+  if(tab === 'dashboard') loadDashboard();
+  if(tab === 'certs') loadCerts();
+  if(tab === 'materials') loadMaterials();
+  if(tab === 'arrivals') loadArrivals();
+  if(tab === 'productions') loadProductions();
+  if(tab === 'shipments') loadShipments();
+};
+
+window.toggleForm = function(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+};
+
+// ===== UTILS =====
+function today() { return new Date().toISOString().slice(0,10); }
+function fmtDate(d) {
+  if(!d) return '-';
+  if(d?.toDate) d = d.toDate();
+  if(typeof d === 'string') return d;
+  return d.toLocaleDateString('ja-JP');
+}
+function expiryClass(dateStr) {
+  if(!dateStr) return '';
+  const exp = new Date(dateStr);
+  const now = new Date();
+  const diff = (exp - now) / (1000*60*60*24);
+  if(diff < 0) return 'expiry-danger';
+  if(diff < 90) return 'expiry-warn';
+  return 'expiry-ok';
+}
+function expiryBadge(dateStr) {
+  if(!dateStr) return '';
+  const exp = new Date(dateStr);
+  const now = new Date();
+  const diff = (exp - now) / (1000*60*60*24);
+  if(diff < 0) return '<span class="badge badge-danger">期限切れ</span>';
+  if(diff < 90) return '<span class="badge badge-warn">期限間近</span>';
+  return '<span class="badge badge-green">有効</span>';
+}
+
+// ===== LOAD ALL =====
+let _certs=[], _materials=[], _arrivals=[], _productions=[], _shipments=[];
+
+async function loadAll() {
+  if(!db) return;
+  await Promise.all([loadCerts(), loadMaterials(), loadArrivals(), loadProductions(), loadShipments()]);
+  loadDashboard();
+}
+
+// ===== DASHBOARD =====
+window.loadDashboard = async function() {
+  const now = new Date();
+  const m = now.getMonth(); const y = now.getFullYear();
+  const monthStart = new Date(y, m, 1);
+
+  const validCerts = _certs.filter(c => !c.expiry || new Date(c.expiry) >= now);
+  const expirySoon = _certs.filter(c => {
+    if(!c.expiry) return false;
+    const diff = (new Date(c.expiry) - now) / (1000*60*60*24);
+    return diff >= 0 && diff < 90;
+  });
+  const monthArrivals = _arrivals.filter(a => a.date && new Date(a.date) >= monthStart);
+  const monthProds = _productions.filter(p => p.date && new Date(p.date) >= monthStart);
+  const monthShips = _shipments.filter(s => s.date && new Date(s.date) >= monthStart);
+
+  document.getElementById('ds-certs').textContent = validCerts.length;
+  document.getElementById('ds-expiry').textContent = expirySoon.length;
+  document.getElementById('ds-arrivals').textContent = monthArrivals.length;
+  document.getElementById('ds-prods').textContent = monthProds.length;
+  document.getElementById('ds-ships').textContent = monthShips.length;
+
+  // alerts
+  let alerts = '';
+  if(expirySoon.length > 0) {
+    alerts += `<div class="alert alert-warn">⚠️ 有効期限が90日以内の認証書が ${expirySoon.length} 件あります：${expirySoon.map(c=>c.supplier+'('+c.item+')').join('、')}</div>`;
+  }
+  const expired = _certs.filter(c => c.expiry && new Date(c.expiry) < now);
+  if(expired.length > 0) {
+    alerts += `<div class="alert alert-warn" style="border-color:var(--danger);background:#fde8e8;color:#7a1515;">🚨 期限切れの認証書が ${expired.length} 件あります。更新してください。</div>`;
+  }
+  document.getElementById('dashAlerts').innerHTML = alerts;
+
+  // recent prods
+  const recent = [..._productions].sort((a,b)=>b.date?.localeCompare(a.date||'')||0).slice(0,5);
+  document.getElementById('recentProds').innerHTML = recent.length ? recent.map(p => `
+    <tr>
+      <td>${p.date||'-'}</td>
+      <td>${p.product||'-'}</td>
+      <td><span style="font-family:'Space Mono',monospace;font-size:12px;">${p.lot||'-'}</span></td>
+      <td>${p.qty||'-'} ${p.unit||''}</td>
+      <td>${p.staff||'-'}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="5" class="empty">製造記録なし</td></tr>';
+};
+
+// ===== CERTS =====
+window.loadCerts = async function() {
+  if(!db) { document.getElementById('certList').innerHTML = '<tr><td colspan="8" class="empty">Firebase未接続</td></tr>'; return; }
+  const snap = await getDocs(query(collection(db,'certifications'), orderBy('expiry')));
+  _certs = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  renderCerts();
+};
+
+function renderCerts() {
+  document.getElementById('certList').innerHTML = _certs.length ? _certs.map(c => `
+    <tr>
+      <td>${c.supplier||'-'}</td>
+      <td>${c.item||'-'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:12px;">${c.certNo||'-'}</td>
+      <td>${c.agency||'-'}</td>
+      <td class="${expiryClass(c.expiry)}">${c.expiry||'-'}</td>
+      <td>${expiryBadge(c.expiry)}</td>
+      <td>${c.pdfUrl ? `<a class="pdf-link" href="${c.pdfUrl}" target="_blank">📄 PDF</a>` : '-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteCert('${c.id}')">削除</button></td>
+    </tr>
+  `).join('') : '<tr><td colspan="8" class="empty">登録なし</td></tr>';
+}
+
+window.saveCert = async function() {
+  if(!db) return alert('Firebase未接続です');
+  const supplier = document.getElementById('c_supplier').value.trim();
+  const item = document.getElementById('c_item').value.trim();
+  const expiry = document.getElementById('c_expiry').value;
+  if(!supplier || !item || !expiry) return alert('仕入先・品目・有効期限は必須です');
+
+  const pdfFile = document.getElementById('c_pdf').files[0];
+  let pdfUrl = '';
+  if(pdfFile && storage) {
+    const r = ref(storage, `certs/${Date.now()}_${pdfFile.name}`);
+    await uploadBytes(r, pdfFile);
+    pdfUrl = await getDownloadURL(r);
+  }
+
+  await addDoc(collection(db,'certifications'), {
+    supplier, item, expiry,
+    certNo: document.getElementById('c_certNo').value.trim(),
+    agency: document.getElementById('c_agency').value.trim(),
+    certDate: document.getElementById('c_certDate').value,
+    note: document.getElementById('c_note').value.trim(),
+    pdfUrl,
+    createdAt: new Date().toISOString()
+  });
+  toggleForm('certForm');
+  ['c_supplier','c_agency','c_certNo','c_item','c_certDate','c_expiry','c_note'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('c_pdf').value='';
+  await loadCerts();
+};
+
+window.deleteCert = async function(id) {
+  if(!confirm('削除しますか？')) return;
+  await deleteDoc(doc(db,'certifications',id));
+  await loadCerts();
+};
+
+// ===== MATERIALS =====
+window.loadMaterials = async function() {
+  if(!db) { document.getElementById('matList').innerHTML = '<tr><td colspan="6" class="empty">Firebase未接続</td></tr>'; return; }
+  const snap = await getDocs(collection(db,'materials'));
+  _materials = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  renderMaterials();
+  populateMatSelect();
+};
+
+function renderMaterials() {
+  document.getElementById('matList').innerHTML = _materials.length ? _materials.map(m => `
+    <tr>
+      <td>${m.name||'-'}</td>
+      <td>${m.type ? `<span class="badge ${m.type==='有機'?'badge-green':'badge-gray'}">${m.type}</span>` : '-'}</td>
+      <td>${m.supplier||'-'}</td>
+      <td>${m.unit||'-'}</td>
+      <td>${m.note||'-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteMaterial('${m.id}')">削除</button></td>
+    </tr>
+  `).join('') : '<tr><td colspan="6" class="empty">登録なし</td></tr>';
+}
+
+function populateMatSelect() {
+  const sel = document.getElementById('a_material');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">選択してください</option>' + _materials.map(m => `<option value="${m.name}" ${m.name===cur?'selected':''}>${m.name}</option>`).join('');
+}
+
+window.saveMaterial = async function() {
+  if(!db) return alert('Firebase未接続です');
+  const name = document.getElementById('m_name').value.trim();
+  if(!name) return alert('原材料名は必須です');
+  await addDoc(collection(db,'materials'), {
+    name,
+    type: document.getElementById('m_type').value,
+    supplier: document.getElementById('m_supplier').value.trim(),
+    unit: document.getElementById('m_unit').value.trim(),
+    note: document.getElementById('m_note').value.trim(),
+    createdAt: new Date().toISOString()
+  });
+  toggleForm('matForm');
+  ['m_name','m_supplier','m_unit','m_note'].forEach(id => document.getElementById(id).value='');
+  await loadMaterials();
+};
+
+window.deleteMaterial = async function(id) {
+  if(!confirm('削除しますか？')) return;
+  await deleteDoc(doc(db,'materials',id));
+  await loadMaterials();
+};
+
+// ===== ARRIVALS =====
+window.loadArrivals = async function() {
+  if(!db) { document.getElementById('arrList').innerHTML = '<tr><td colspan="7" class="empty">Firebase未接続</td></tr>'; return; }
+  const snap = await getDocs(query(collection(db,'arrivals'), orderBy('date','desc')));
+  _arrivals = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  renderArrivals();
+  populateCertSelect();
+};
+
+function renderArrivals() {
+  document.getElementById('arrList').innerHTML = _arrivals.length ? _arrivals.map(a => `
+    <tr>
+      <td>${a.date||'-'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:12px;">${a.lot||'-'}</td>
+      <td>${a.material||'-'}</td>
+      <td>${a.qty||'-'} ${a.unit||''}</td>
+      <td>${a.supplier||'-'}</td>
+      <td>${a.certId ? `<span class="badge badge-green">紐付あり</span>` : '-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteArrival('${a.id}')">削除</button></td>
+    </tr>
+  `).join('') : '<tr><td colspan="7" class="empty">登録なし</td></tr>';
+}
+
+function populateCertSelect() {
+  const sel = document.getElementById('a_cert');
+  sel.innerHTML = '<option value="">選択（任意）</option>' + _certs.map(c => `<option value="${c.id}">${c.supplier} / ${c.item} (${c.expiry})</option>`).join('');
+}
+
+window.saveArrival = async function() {
+  if(!db) return alert('Firebase未接続です');
+  const material = document.getElementById('a_material').value;
+  const lot = document.getElementById('a_lot').value.trim();
+  const date = document.getElementById('a_date').value;
+  if(!material || !lot || !date) return alert('入荷日・原材料・ロット番号は必須です');
+  await addDoc(collection(db,'arrivals'), {
+    date, material, lot,
+    qty: document.getElementById('a_qty').value,
+    unit: document.getElementById('a_unit').value.trim(),
+    supplier: document.getElementById('a_supplier').value.trim(),
+    certId: document.getElementById('a_cert').value,
+    note: document.getElementById('a_note').value.trim(),
+    createdAt: new Date().toISOString()
+  });
+  toggleForm('arrForm');
+  ['a_lot','a_qty','a_unit','a_supplier','a_note'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('a_date').value = today();
+  await loadArrivals();
+};
+
+window.deleteArrival = async function(id) {
+  if(!confirm('削除しますか？')) return;
+  await deleteDoc(doc(db,'arrivals',id));
+  await loadArrivals();
+};
+
+// ===== PRODUCTIONS =====
+window.loadProductions = async function() {
+  if(!db) { document.getElementById('prodList').innerHTML = '<tr><td colspan="7" class="empty">Firebase未接続</td></tr>'; return; }
+  const snap = await getDocs(query(collection(db,'productions'), orderBy('date','desc')));
+  _productions = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  renderProductions();
+};
+
+function renderProductions() {
+  document.getElementById('prodList').innerHTML = _productions.length ? _productions.map(p => `
+    <tr>
+      <td>${p.date||'-'}</td>
+      <td>${p.product||'-'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:12px;">${p.lot||'-'}</td>
+      <td>${p.qty||'-'} ${p.unit||''}</td>
+      <td>${p.staff||'-'}</td>
+      <td style="font-size:11px;max-width:180px;word-break:break-all;">${p.usedLots||'-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteProduction('${p.id}')">削除</button></td>
+    </tr>
+  `).join('') : '<tr><td colspan="7" class="empty">登録なし</td></tr>';
+}
+
+window.saveProduction = async function() {
+  if(!db) return alert('Firebase未接続です');
+  const product = document.getElementById('p_product').value.trim();
+  const lot = document.getElementById('p_lot').value.trim();
+  const date = document.getElementById('p_date').value;
+  if(!product || !lot || !date) return alert('製造日・製品名・ロット番号は必須です');
+  await addDoc(collection(db,'productions'), {
+    date, product, lot,
+    qty: document.getElementById('p_qty').value,
+    unit: document.getElementById('p_unit').value.trim(),
+    staff: document.getElementById('p_staff').value.trim(),
+    usedLots: document.getElementById('p_usedLots').value.trim(),
+    note: document.getElementById('p_note').value.trim(),
+    createdAt: new Date().toISOString()
+  });
+  toggleForm('prodForm');
+  ['p_product','p_lot','p_qty','p_unit','p_staff','p_usedLots','p_note'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('p_date').value = today();
+  await loadProductions();
+};
+
+window.deleteProduction = async function(id) {
+  if(!confirm('削除しますか？')) return;
+  await deleteDoc(doc(db,'productions',id));
+  await loadProductions();
+};
+
+// ===== SHIPMENTS =====
+window.loadShipments = async function() {
+  if(!db) { document.getElementById('shipList').innerHTML = '<tr><td colspan="7" class="empty">Firebase未接続</td></tr>'; return; }
+  const snap = await getDocs(query(collection(db,'shipments'), orderBy('date','desc')));
+  _shipments = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  renderShipments();
+};
+
+function renderShipments() {
+  document.getElementById('shipList').innerHTML = _shipments.length ? _shipments.map(s => `
+    <tr>
+      <td>${s.date||'-'}</td>
+      <td>${s.dest||'-'}</td>
+      <td>${s.product||'-'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:12px;">${s.prodLot||'-'}</td>
+      <td>${s.qty||'-'} ${s.unit||''}</td>
+      <td>${s.carrier||'-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteShipment('${s.id}')">削除</button></td>
+    </tr>
+  `).join('') : '<tr><td colspan="7" class="empty">登録なし</td></tr>';
+}
+
+window.saveShipment = async function() {
+  if(!db) return alert('Firebase未接続です');
+  const dest = document.getElementById('s_dest').value.trim();
+  const product = document.getElementById('s_product').value.trim();
+  const date = document.getElementById('s_date').value;
+  if(!dest || !product || !date) return alert('出荷日・出荷先・製品名は必須です');
+  await addDoc(collection(db,'shipments'), {
+    date, dest, product,
+    prodLot: document.getElementById('s_prodLot').value.trim(),
+    qty: document.getElementById('s_qty').value,
+    unit: document.getElementById('s_unit').value.trim(),
+    carrier: document.getElementById('s_carrier').value,
+    trackNo: document.getElementById('s_trackNo').value.trim(),
+    note: document.getElementById('s_note').value.trim(),
+    createdAt: new Date().toISOString()
+  });
+  toggleForm('shipForm');
+  ['s_dest','s_product','s_prodLot','s_qty','s_unit','s_trackNo','s_note'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('s_date').value = today();
+  await loadShipments();
+};
+
+window.deleteShipment = async function(id) {
+  if(!confirm('削除しますか？')) return;
+  await deleteDoc(doc(db,'shipments',id));
+  await loadShipments();
+};
+
+// ===== TRACE =====
+window.runTrace = function() {
+  const q = document.getElementById('traceQuery').value.trim();
+  if(!q) return alert('ロット番号を入力してください');
+
+  const flow = [];
+
+  // 入荷ロットで検索
+  const arrival = _arrivals.find(a => a.lot === q);
+  if(arrival) {
+    // 認証書
+    const cert = arrival.certId ? _certs.find(c => c.id === arrival.certId) : null;
+    flow.push({
+      icon: '🏅',
+      title: '認証書',
+      detail: cert ? `${cert.supplier} / ${cert.item} ／ 有効期限: ${cert.expiry}` : '認証書情報なし'
+    });
+    flow.push({
+      icon: '📦',
+      title: `入荷：${arrival.material}`,
+      detail: `ロット: ${arrival.lot} ／ 入荷日: ${arrival.date} ／ 数量: ${arrival.qty}${arrival.unit} ／ 仕入先: ${arrival.supplier||'-'}`
+    });
+    // この入荷ロットを使った製造
+    const prods = _productions.filter(p => p.usedLots && p.usedLots.includes(q));
+    prods.forEach(p => {
+      flow.push({
+        icon: '🏭',
+        title: `製造：${p.product}`,
+        detail: `ロット: ${p.lot} ／ 製造日: ${p.date} ／ 数量: ${p.qty}${p.unit}`
+      });
+      const ships = _shipments.filter(s => s.prodLot === p.lot);
+      ships.forEach(s => {
+        flow.push({
+          icon: '🚚',
+          title: `出荷：${s.dest}`,
+          detail: `製品: ${s.product} ／ 出荷日: ${s.date} ／ 数量: ${s.qty}${s.unit} ／ ${s.carrier||''}`
+        });
+      });
+    });
+  }
+
+  // 製造ロットで検索
+  const prod = _productions.find(p => p.lot === q);
+  if(prod && !arrival) {
+    // 使用原料ロット
+    if(prod.usedLots) {
+      prod.usedLots.split(',').map(l=>l.trim()).filter(Boolean).forEach(lotId => {
+        const arr = _arrivals.find(a => a.lot === lotId);
+        if(arr) {
+          const cert = arr.certId ? _certs.find(c => c.id === arr.certId) : null;
+          if(cert) flow.push({ icon:'🏅', title:'認証書', detail:`${cert.supplier} / ${cert.item} ／ 有効期限: ${cert.expiry}` });
+          flow.push({ icon:'📦', title:`入荷：${arr.material}`, detail:`ロット: ${arr.lot} ／ 入荷日: ${arr.date} ／ ${arr.qty}${arr.unit}` });
+        }
+      });
+    }
+    flow.push({
+      icon: '🏭',
+      title: `製造：${prod.product}`,
+      detail: `ロット: ${prod.lot} ／ 製造日: ${prod.date} ／ 数量: ${prod.qty}${prod.unit}`
+    });
+    const ships = _shipments.filter(s => s.prodLot === q);
+    ships.forEach(s => {
+      flow.push({ icon:'🚚', title:`出荷：${s.dest}`, detail:`製品: ${s.product} ／ 出荷日: ${s.date} ／ ${s.qty}${s.unit}` });
+    });
+  }
+
+  const resultDiv = document.getElementById('traceResult');
+  const flowDiv = document.getElementById('traceFlow');
+
+  if(flow.length === 0) {
+    flowDiv.innerHTML = `<div class="card"><p style="color:var(--text-light);text-align:center;padding:20px;">「${q}」に一致するロットが見つかりませんでした</p></div>`;
+  } else {
+    flowDiv.innerHTML = flow.map(f => `
+      <div class="trace-step">
+        <div class="trace-dot">${f.icon}</div>
+        <div class="trace-content">
+          <h4>${f.title}</h4>
+          <p>${f.detail}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+  resultDiv.style.display = 'block';
+};
+
+// ===== INIT =====
+function init() {
+  const cfg = getConfig();
+  if(cfg.apiKey && cfg.projectId) {
+    document.getElementById('setupModal').classList.remove('active');
+    initFirebase();
+  }
+  // set today defaults
+  const dateFields = ['a_date','p_date','s_date'];
+  dateFields.forEach(id => { const el = document.getElementById(id); if(el) el.value = today(); });
+}
+
+init();
+</script>
+</body>
+</html>
